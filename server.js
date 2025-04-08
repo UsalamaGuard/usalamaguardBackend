@@ -103,20 +103,45 @@ const checkDbConnection = (req, res, next) => {
 
 // --- ROUTES ---
 // Signup
+// Signup
 app.post("/api/auth/signup", checkDbConnection, async (req, res) => {
   try {
-    const { email, password, notificationEmail, firstName } = req.body;
+    const { email, password, notificationEmail, firstName, cameraLocation } = req.body;
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ error: "Email already exists" });
 
+    if (!cameraLocation) {
+      return res.status(400).json({ error: "Camera location is required" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ email, password: hashedPassword, notificationEmail, firstName });
+    const user = new User({ 
+      email, 
+      password: hashedPassword, 
+      notificationEmail, 
+      firstName, 
+      cameraLocation 
+    });
     await user.save();
-    console.log(`Signup successful for ${email}, user ID: ${user._id}`);
-    res.status(201).json({ message: "User created" });
+    console.log(`Signup successful for ${email}, user ID: ${user._id}, cameraLocation: ${cameraLocation}`);
+    res.status(201).json({ message: "User created", id: user._id });
   } catch (err) {
     console.error("Signup error:", err);
     res.status(500).json({ error: "Signup failed" });
+  }
+});
+
+// Fetch camera location
+app.get("/api/users/:id/camera-location", checkDbConnection, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).select("cameraLocation");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    console.log(`Camera location fetched for user ${id}: ${user.cameraLocation || "Not Set"}`);
+    res.json({ cameraLocation: user.cameraLocation || "Not Set" });
+  } catch (err) {
+    console.error("Error fetching camera location:", err);
+    res.status(500).json({ error: "Failed to fetch camera location" });
   }
 });
 
@@ -134,18 +159,6 @@ app.post("/api/auth/login", checkDbConnection, async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
-  }
-});
-app.get("/api/users/:id/camera-location", checkDbConnection, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = await User.findById(id).select("cameraLocation");
-    if (!user) return res.status(404).json({ error: "User not found" });
-    console.log(`Camera location fetched for user ${id}: ${user.cameraLocation}`);
-    res.json({ cameraLocation: user.cameraLocation || "" });
-  } catch (err) {
-    console.error("Error fetching camera location:", err);
-    res.status(500).json({ error: "Failed to fetch camera location" });
   }
 });
 
