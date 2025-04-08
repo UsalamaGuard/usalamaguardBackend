@@ -136,19 +136,16 @@ app.post("/api/auth/login", checkDbConnection, async (req, res) => {
     res.status(500).json({ error: "Login failed" });
   }
 });
-
-// Update camera location
-app.patch("/api/users/:id/camera-location", checkDbConnection, async (req, res) => {
+app.get("/api/users/:id/camera-location", checkDbConnection, async (req, res) => {
   try {
     const { id } = req.params;
-    const { cameraLocation } = req.body;
-    const user = await User.findByIdAndUpdate(id, { cameraLocation }, { new: true });
+    const user = await User.findById(id).select("cameraLocation");
     if (!user) return res.status(404).json({ error: "User not found" });
-    console.log(`Camera location updated for user ${id}: ${cameraLocation}`);
-    res.json({ message: "Camera location updated", cameraLocation: user.cameraLocation });
+    console.log(`Camera location fetched for user ${id}: ${user.cameraLocation}`);
+    res.json({ cameraLocation: user.cameraLocation || "" });
   } catch (err) {
-    console.error("Camera location update error:", err);
-    res.status(500).json({ error: "Failed to update camera location" });
+    console.error("Error fetching camera location:", err);
+    res.status(500).json({ error: "Failed to fetch camera location" });
   }
 });
 
