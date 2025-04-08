@@ -155,7 +155,7 @@ app.post("/api/auth/login", checkDbConnection, async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
     console.log(`Login successful for ${email}, user ID: ${user._id}`);
-    res.json({ id: user._id, email: user.email, firstName: user.firstName });
+    res.json({ id: user._id, email: user.email, firstName: user.firstName, cameraLocation: user.cameraLocation });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
