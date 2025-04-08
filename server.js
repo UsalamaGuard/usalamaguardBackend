@@ -103,18 +103,17 @@ const checkDbConnection = (req, res, next) => {
 
 // --- ROUTES ---
 // Signup
-// In the backend code, update the signup route
 app.post("/api/auth/signup", checkDbConnection, async (req, res) => {
   try {
-    const { email, password, notificationEmail, firstName, cameraLocation } = req.body;
+    const { email, password, notificationEmail, firstName } = req.body;
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ error: "Email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ email, password: hashedPassword, notificationEmail, firstName, cameraLocation });
+    const user = new User({ email, password: hashedPassword, notificationEmail, firstName });
     await user.save();
-    console.log(`Signup successful for ${email}, user ID: ${user._id}, cameraLocation: ${cameraLocation}`);
-    res.status(201).json({ message: "User created", id: user._id }); // Return user ID for debugging
+    console.log(`Signup successful for ${email}, user ID: ${user._id}`);
+    res.status(201).json({ message: "User created" });
   } catch (err) {
     console.error("Signup error:", err);
     res.status(500).json({ error: "Signup failed" });
