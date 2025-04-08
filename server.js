@@ -101,9 +101,6 @@ const checkDbConnection = (req, res, next) => {
   next();
 };
 
-// --- ROUTES ---
-// Signup
-// Signup
 app.post("/api/auth/signup", checkDbConnection, async (req, res) => {
   try {
     const { email, password, notificationEmail, firstName, cameraLocation } = req.body;
@@ -136,26 +133,40 @@ app.get("/api/users/:id/camera-location", checkDbConnection, async (req, res) =>
   try {
     const { id } = req.params;
     const user = await User.findById(id).select("cameraLocation");
-    if (!user) return res.status(404).json({ error: "User not found" });
-    console.log(`Camera location fetched for user ${id}: ${user.cameraLocation || "Not Set"}`);
-    res.json({ cameraLocation: user.cameraLocation || "Not Set" });
+    if (!user || !user.cameraLocation) {
+      return res.status(404).json({ error: "Camera location not found for this user" });
+    }
+    console.log(`Camera location fetched for user ${id}: ${user.cameraLocation}`);
+    res.json({ cameraLocation: user.cameraLocation });
   } catch (err) {
     console.error("Error fetching camera location:", err);
     res.status(500).json({ error: "Failed to fetch camera location" });
   }
 });
 
-// Login
+// Login endpoint
 app.post("/api/auth/login", checkDbConnection, async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
+    
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      console.log(`Login failed for ${email}: Invalid credentials`);
       return res.status(401).json({ error: "Invalid credentials" });
     }
-    console.log(`Login successful for ${email}, user ID: ${user._id}`);
-    res.json({ id: user._id, email: user.email, firstName: user.firstName, cameraLocation: user.cameraLocation });
+
+    if (!user.cameraLocation) {
+      return res.status(400).json({ error: "Camera location not configured" });
+    }
+
+    const userData = {
+      id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      cameraLocation: user.cameraLocation
+    };
+
+    console.log("Login successful, returning:", userData);
+    res.json(userData);
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
