@@ -12,7 +12,8 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   "http://localhost:3000",          
-  "https://usalamaguardai.vercel.app", 
+  "https://usalamaguardai.vercel.app",
+  "https://usalamaguard-backend.vercel.app"
 ];
 
 const corsOptions = {
