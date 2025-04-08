@@ -101,6 +101,9 @@ const checkDbConnection = (req, res, next) => {
   next();
 };
 
+// --- ROUTES ---
+// Signup
+// Signup
 app.post("/api/auth/signup", checkDbConnection, async (req, res) => {
   try {
     const { email, password, notificationEmail, firstName, cameraLocation } = req.body;
@@ -133,17 +136,14 @@ app.get("/api/users/:id/camera-location", checkDbConnection, async (req, res) =>
   try {
     const { id } = req.params;
     const user = await User.findById(id).select("cameraLocation");
-    if (!user || !user.cameraLocation) {
-      return res.status(404).json({ error: "Camera location not found for this user" });
-    }
-    console.log(`Camera location fetched for user ${id}: ${user.cameraLocation}`);
-    res.json({ cameraLocation: user.cameraLocation });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    console.log(`Camera location fetched for user ${id}: ${user.cameraLocation || "Not Set"}`);
+    res.json({ cameraLocation: user.cameraLocation || "Not Set" });
   } catch (err) {
     console.error("Error fetching camera location:", err);
     res.status(500).json({ error: "Failed to fetch camera location" });
   }
 });
-
 // Login endpoint
 app.post("/api/auth/login", checkDbConnection, async (req, res) => {
   try {
@@ -154,18 +154,15 @@ app.post("/api/auth/login", checkDbConnection, async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    if (!user.cameraLocation) {
-      return res.status(400).json({ error: "Camera location not configured" });
-    }
-
+    // Explicitly include all needed fields
     const userData = {
       id: user._id,
       email: user.email,
       firstName: user.firstName,
-      cameraLocation: user.cameraLocation
+      cameraLocation: user.cameraLocation || "Not Set" // Ensure this is included
     };
 
-    console.log("Login successful, returning:", userData);
+    console.log("Login successful, returning:", userData); // Debug log
     res.json(userData);
   } catch (err) {
     console.error("Login error:", err);
